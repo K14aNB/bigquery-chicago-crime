@@ -1,0 +1,8 @@
+*.ipynb
+data
+*.csv
+*.zip
+*.tsv
+*.xls
+*.xlsx
+*.data
