@@ -2,6 +2,7 @@ pandas==2.2.2
 matplotlib
 seaborn
 PyYAML
+db-dtypes
 download_kaggle_dataset @ git+https://github.com/K14aNB/download-kaggle-dataset.git@main
 gcloud_bigquery_setup @ git+https://github.com/K14aNB/gcloud-bigquery-setup.git@main
 env_setup @ git+https://github.com/K14aNB/setup-notebook-environment.git@main
