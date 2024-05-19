@@ -1,0 +1,11 @@
+notebooks:
+  Bigquery-Chicago-Crime:
+    data:
+      - source: 'bigquery-public-data'
+      - dataset-ids:
+          - chicago_crime
+
+    outputs:
+      - nb-html-preview: 'true'
+      - py-percent-script: 'true'
+      - output-path: 'Notebooks' 
