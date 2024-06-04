@@ -80,6 +80,10 @@ crime=client.get_table('bigquery-public-data.chicago_crime.crime')
 # %% [markdown]
 # ### **Exploratory Data Analysis**
 
+# %%
+# Set a limit on number of bytes that can be billed per query
+max_bytes_limit_per_query=3*10**8
+
 # %% [markdown]
 # **Schema of `crime` table**
 
@@ -115,11 +119,21 @@ crime_type_query='''
                  GROUP BY primary_type
                  ORDER BY count_of_crime_committed DESC
                  '''
-crime_type_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=10**8)
+crime_type_query_run=False
 
 # %%
-crime_type_job=client.query(crime_type_query,job_config=crime_type_query_config)
-crime_type_results=crime_type_job.to_dataframe()
+# Dry Run
+crime_type_query_config_dr=bigquery.QueryJobConfig(dry_run=True,use_query_cache=False)
+crime_type_job_dr=client.query(crime_type_query,job_config=crime_type_query_config_dr)
+print(f'Total bytes processed={crime_type_job_dr.total_bytes_processed}')
+
+# %%
+# Actual Run
+if crime_type_job_dr.total_bytes_processed<=max_bytes_limit_per_query:
+    crime_type_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=crime_type_job_dr.total_bytes_processed+10**6)
+    crime_type_job=client.query(crime_type_query,job_config=crime_type_query_config)
+    crime_type_results=crime_type_job.to_dataframe()
+    crime_type_query_run=True
 
 # %%
 crime_type_results
@@ -132,11 +146,21 @@ crime_locations_query='''
                       SELECT DISTINCT location_description
                       FROM bigquery-public-data.chicago_crime.crime
                       '''
-crime_locations_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=20**8)
+crime_locations_query_run=False
 
 # %%
-crime_locations_job=client.query(crime_locations_query,job_config=crime_locations_query_config)
-crime_locations_results=crime_locations_job.to_dataframe()
+# Dry Run
+crime_locations_query_config_dr=bigquery.QueryJobConfig(dry_run=True,use_query_cache=False)
+crime_locations_job_dr=client.query(crime_locations_query,job_config=crime_locations_query_config_dr)
+print(f'Total bytes processed={crime_locations_job_dr.total_bytes_processed}')
+
+# %%
+# Actual Run
+if crime_locations_job_dr.total_bytes_processed<=max_bytes_limit_per_query:
+    crime_locations_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=crime_locations_job_dr.total_bytes_processed+10**6)
+    crime_locations_job=client.query(crime_locations_query,job_config=crime_locations_query_config)
+    crime_locations_results=crime_locations_job.to_dataframe()
+    crime_locations_query_run=True
 
 # %%
 crime_locations_results
@@ -152,11 +176,21 @@ gov_bldg_crime_types_query='''
                            GROUP BY primary_type
                            ORDER BY counts_of_crime DESC
                            '''
-gov_bldg_crime_types_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=20**8)
+gov_bldg_crime_types_query_run=False
 
 # %%
-gov_bldg_crime_types_job=client.query(gov_bldg_crime_types_query,job_config=gov_bldg_crime_types_query_config)
-gov_bldg_crime_types_results=gov_bldg_crime_types_job.to_dataframe()
+# Dry Run
+gov_bldg_crime_types_query_config_dr=bigquery.QueryJobConfig(dry_run=True,use_query_cache=False)
+gov_bldg_crime_types_job_dr=client.query(gov_bldg_crime_types_query,job_config=gov_bldg_crime_types_query_config_dr)
+print(f'Total bytes processed={gov_bldg_crime_types_job_dr.total_bytes_processed}')
+
+# %%
+# Actual Run
+if gov_bldg_crime_types_job_dr.total_bytes_processed<=max_bytes_limit_per_query:
+    gov_bldg_crime_types_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=gov_bldg_crime_types_job_dr.total_bytes_processed+10**6)
+    gov_bldg_crime_types_job=client.query(gov_bldg_crime_types_query,job_config=gov_bldg_crime_types_query_config)
+    gov_bldg_crime_types_results=gov_bldg_crime_types_job.to_dataframe()
+    gov_bldg_crime_types_query_run=True
 
 # %%
 gov_bldg_crime_types_results
@@ -171,11 +205,21 @@ crime_arrests_query='''
                     GROUP BY primary_type
                     ORDER BY counts_of_crime DESC,arrest_count DESC
                     '''
-crime_arrests_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=20**8)
+crime_arrests_query_run=False
 
 # %%
-crime_arrests_job=client.query(crime_arrests_query,job_config=crime_arrests_query_config)
-crime_arrests_results=crime_arrests_job.to_dataframe()
+# Dry Run
+crime_arrests_query_config_dr=bigquery.QueryJobConfig(dry_run=True,use_query_cache=False)
+crime_arrests_job_dr=client.query(crime_arrests_query,job_config=crime_arrests_query_config_dr)
+print(f'Total bytes processed={crime_arrests_job_dr.total_bytes_processed}')
+
+# %%
+# Actual Run
+if crime_arrests_job_dr.total_bytes_processed<=max_bytes_limit_per_query:
+    crime_arrests_query_config=bigquery.QueryJobConfig(maximum_bytes_billed=crime_arrests_job_dr.total_bytes_processed+10**6)
+    crime_arrests_job=client.query(crime_arrests_query,job_config=crime_arrests_query_config)
+    crime_arrests_results=crime_arrests_job.to_dataframe()
+    crime_arrests_query_run=True
 
 # %%
 crime_arrests_results
@@ -188,30 +232,31 @@ crime_arrests_results
 
 # %%
 # Considering crimes which are committed >10,000
-common_crimes=crime_type_results.loc[crime_type_results['count_of_crime_committed']>10000]
+if crime_type_query_run is True:
+    common_crimes=crime_type_results.loc[crime_type_results['count_of_crime_committed']>10000]
 
-# %%
-# Bar plot of primary_type
-fig=plt.figure(figsize=(30,10))
-sns.barplot(x='primary_type',y='count_of_crime_committed',hue='primary_type',palette='pastel',data=common_crimes)
-plt.xticks(rotation=60)
-plt.xlabel('Crime')
-plt.ylabel('Count')
-plt.title('Bar plot of Crimes in Chicago (2001-present)')
-plt.show()
+    # Bar plot of primary_type
+    fig=plt.figure(figsize=(30,10))
+    sns.barplot(x='primary_type',y='count_of_crime_committed',hue='primary_type',palette='pastel',data=common_crimes)
+    plt.xticks(rotation=60)
+    plt.xlabel('Crime')
+    plt.ylabel('Count')
+    plt.title('Bar plot of Crimes in Chicago (2001-present)')
+    plt.show()
 
 # %% [markdown]
 # **Prevalence of Justice of each type of crime in Chicago (2001-present)**
 
 # %%
-# Scatter plot for counts_of_crime and arrest_count
-fig=plt.figure(figsize=(30,10))
-sns.barplot(x='primary_type',y='counts_of_crime',hue='primary_type',palette='husl',data=crime_arrests_results)
-sns.pointplot(x='primary_type',y='arrest_count',hue='primary_type',palette='pastel',data=crime_arrests_results)
-plt.xticks(rotation=60)
-plt.xlabel('Crime')
-plt.ylabel('Crime and Arrest count')
-plt.title('Bar plot of Crime vs Crime counts and Point plot of Crime vs Arrest counts')
-plt.show()
+if crime_arrests_query_run is True:
+    # Scatter plot for counts_of_crime and arrest_count
+    fig=plt.figure(figsize=(30,10))
+    sns.barplot(x='primary_type',y='counts_of_crime',hue='primary_type',palette='husl',data=crime_arrests_results)
+    sns.pointplot(x='primary_type',y='arrest_count',hue='primary_type',palette='pastel',data=crime_arrests_results)
+    plt.xticks(rotation=60)
+    plt.xlabel('Crime')
+    plt.ylabel('Crime and Arrest count')
+    plt.title('Bar plot of Crime vs Crime counts and Point plot of Crime vs Arrest counts')
+    plt.show()
 
 # %%
